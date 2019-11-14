@@ -7,12 +7,12 @@ ha_category:
 ha_release: 0.101.3
 ---
 
-[Rhasspy](https://rhasspy.readthedocs.io) is a highly customizable, truly private voice assistant that [runs completely offline](#the-zen-of-rhasspy) and [supports many languages](https://rhasspy.readthedocs.io/en/latest/#supported-languages). It generates a personalized speech/intent recognizer based on voice commands that [you can create and customize](#customizing-voice-commands) on your device.
+[Rhasspy](https://rhasspy.readthedocs.io) is a highly customizable, private voice assistant that [runs completely offline](#the-zen-of-rhasspy) and [supports many languages](https://rhasspy.readthedocs.io/en/latest/#supported-languages). It generates a personalized speech/intent recognizer based on voice commands that [you can create and customize](#customizing-voice-commands) entirely on your device.
 
-For this integration to function, you *must* do the following:
+To get started, you must:
 
 1. [Install a Rhasspy server](https://rhasspy.readthedocs.io/en/latest/installation/)
-2. Visit the Rhasspy web interface at [http://YOUR_RHASSPY_SERVER:12101](http://YOUR_RHASSPY_SERVER:12101) to download a language-specific profile
+2. Visit the web interface at [http://YOUR_RHASSPY_SERVER:12101](http://YOUR_RHASSPY_SERVER:12101) to download a language-specific profile
 
 Make sure your Rhasspy server is running *before* you start Home Assistant (or you will need to [re-train from Home Assistant](#re-training) after Rhasspy starts).
 
@@ -529,3 +529,64 @@ When Home Assistant starts the `rhasspy` integration, it will automatically cont
 * No online account required
 * No data leaves your device
 * Works for the majority, customizable by the minority
+
+## Complete Configuration
+
+Below is the complete default configuration for `rhasspy`.
+
+{% raw %}
+```yaml
+rhasspy:
+  api_url: "http://localhost:12101/api"
+  custom_words:
+  handle_intents:
+    - IsDeviceOn
+    - IsDeviceOff
+    - IsCoverOpen
+    - IsCoverClosed
+    - DeviceState
+    - TriggerAutomation
+    - TriggerAutomationLater
+    - SetTimer
+    - TimerReady
+  intent_states:
+    IsDeviceOn:
+      - "on"
+    IsDeviceOff:
+      - "off"
+    IsCoverOpen:
+      - "open"
+    IsCoverClosed:
+      - "closed"
+  language: "en-US"
+  make_intent_commands: true
+  name_replace:
+    - "[_-_]": " "
+  register_conversation: true
+  response_templates:
+    IsDeviceOn: "{{ 'Yes' if entity.state in states else 'No' }}. {{ entity.name }} {{ 'are' if entity.name.endswith('s') else 'is' }} on."
+    IsDeviceOff: "{{ 'Yes' if entity.state in states else 'No' }}. {{ entity.name }} {{ 'are' if entity.name.endswith('s') else 'is' }} off."
+    IsCoverOpen: "{{ 'Yes' if entity.state in states else 'No' }}. {{ entity.name }} {{ 'are' if entity.name.endswith('s') else 'is' }} open."
+    IsCoverClosed: "{{ 'Yes' if entity.state in states else 'No' }}. {{ entity.name }} {{ 'are' if entity.name.endswith('s') else 'is' }} closed."
+    IsDeviceState: "{{ 'Yes' if entity.state == state else 'No' }}. {{ entity.name }} {{ 'are' if entity.name.endswith('s') else 'is' }} {{ state.replace('_', ' ') }}."
+    DeviceState: "{{ entity.name }} {% 'are' if entity.name.endswith('s') else 'is' %} {{ entity.state }}."
+    TimerReady: "Timer is ready."
+    TriggerAutomation: "Triggered {{ automation.name }}."
+  slots:
+    light_color:
+      - black
+      - blue
+      - brown
+      - gray
+      - green
+      - pink
+      - purple
+      - violet
+      - red
+      - yellow
+      - orange
+      - white
+  shopping_list_items:
+  train_timeout: 1.0
+```
+{% endraw %}
