@@ -7,7 +7,7 @@ ha_category:
 ha_release: 0.101.3
 ---
 
-[Rhasspy](https://rhasspy.readthedocs.io) is a highly customizable, private voice assistant that [runs completely offline](#the-zen-of-rhasspy) and [supports many languages](#supported-languages). It generates a personalized speech/intent recognizer based on voice commands that [you can create](#new-voice-commands) entirely on your device.
+[Rhasspy](https://rhasspy.readthedocs.io) is a highly customizable, private voice assistant that [runs completely offline](#the-zen-of-rhasspy) and [supports many languages](#supported-languages). It generates a personalized speech/intent recognizer from voice commands that [you can create](#new-voice-commands) entirely on your device.
 
 To get started, you must:
 
@@ -31,7 +31,9 @@ stt:
   - platform: rhasspy
 ```
 
-Voice commands are [automatically generated](#built-in-voice-commands) based on your devices. Out of the box, you can [turn devices on and off](#turn-onoff-and-toggle), [ask about their states](#get-device-state), [set a timer](#set-a-timer), and [run automations](#run-automations) via voice. This process is [highly customizable](#controlling-voice-command-generation).
+Voice commands are [automatically generated](#built-in-voice-commands) based on your Home Assistant configuration when the `rhasspy` integration starts.
+
+Out of the box, you can [turn devices on and off](#turn-onoff-and-toggle), [ask about their states](#get-device-state), [set a timer](#set-a-timer), and [run automations](#run-automations) via voice. This process is [highly customizable](#controlling-voice-command-generation).
 
 ## Rhasspy Configuration
 
@@ -52,11 +54,11 @@ handle_intents:
   required: false
   type: list
 intent_commands:
-  description: Map of intents and [voice command templates](https://rhasspy.readthedocs.io/en/latest/training/#sentencesini). This is where you specify [custom voice commands](#custom-voice-commands).
+  description: Map of intent names and [voice command templates](https://rhasspy.readthedocs.io/en/latest/training/#sentencesini). This is where you specify [custom voice commands](#custom-voice-commands).
   required: false
   type: map
 intent_states:
-  description: Map of [intents and state names](#intent-state-names) for deciding when devices are "on", "open", etc.
+  description: Map of [intent and state names](#intent-state-names) for deciding when devices are "on", "open", etc.
   required: false
   type: map
 language:
@@ -79,7 +81,7 @@ name_replace:
   required: false
   type: map
 response_templates:
-  description: Map of intents and [jinja2 speech templates](https://www.home-assistant.io/docs/configuration/templating/). This controls how the `rhasspy` integration generates speech in response to the [built-in intents](#built-in-intents).
+  description: Map of intent names and [jinja2 templates](https://www.home-assistant.io/docs/configuration/templating/). This controls how the `rhasspy` integration generates speech in response to the [built-in intents](#built-in-intents).
   required: false
   type: map
 shopping_list_items:
