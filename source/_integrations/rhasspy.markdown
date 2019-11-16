@@ -44,7 +44,7 @@ api_url:
   description: URL of your Rhasspy server's web API.
   required: false
   type: string
-  default: http://localhost:12101/api
+  default: http://localhost:12101/api/
 custom_words:
   description: Map of words and how you will pronounce them (see [custom words](https://rhasspy.readthedocs.io/en/latest/training/#custom-words)).
   required: false
@@ -55,6 +55,10 @@ handle_intents:
   type: list
 intent_commands:
   description: Map of intent names and [voice command templates](https://rhasspy.readthedocs.io/en/latest/training/#sentencesini). This is where you specify [custom voice commands](#custom-voice-commands).
+  required: false
+  type: map
+intent_filters:
+  description: Map of [intent names and filters](#intent-filters) for including/excluding specific domains/entities in auto-generated commands.
   required: false
   type: map
 intent_states:
@@ -376,12 +380,31 @@ rhasspy:
   make_intent_commands: false
 ```
 
+### Intent Filters
+
+The `intent_filters` parameter controls which domains and entities are included or excluded when auto-generating commands for a specific intent. For example:
+
+```yaml
+rhasspy:
+  make_intent_commands: true
+  intent_filters:
+    HassTurnOn:
+      include:
+        entities:
+          - my_special_entity
+      exclude:
+        domains:
+          - switch
+```
+
+will exclude switches from having "turn on..." commands auto-generated, and will include the entity with id `my_special_entity`.
+
 ### Entity Names
 
 `rhasspy` uses the friendly names of your entities in voice commands. These names may not be compatible with Rhasspy's speech recognition system, so the integration attempts to "clean" names before training your Rhasspy server. These cleaning steps are:
 
-1. Numbers are replaced with words ("65" becomes "sixty-five")
-2. Dashes (`-`) and underscores (`_`) are replaced with a space
+1. Dashes (`-`) and underscores (`_`) are replaced with a space
+2. Numbers are replaced with words ("65" becomes "sixty five")
 
 Before cleaning a name, the `rhasspy` integration checks `name_replace.entities` for a matching entity id and manually cleaned name. For example:
 
@@ -548,32 +571,174 @@ rhasspy:
     - SetTimer
     - TimerReady
   intent_commands:
-    IsDeviceOn:
+    HassTurnOn:
       - command_templates:
           - "turn on [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}}"
           - "turn [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} on"
-        include:
-          domains:
-            - light
-            - switch
-            - camera
-            - fan
-            - media_player
-          entities:
-            - group.all_lights
-    IsDeviceOff:
+    HassTurnOff:
       - command_templates:
           - "turn off [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}}"
           - "turn [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} off"
-        include:
-          domains:
-            - light
-            - switch
-            - camera
-            - fan
-            - media_player
-          entities:
-            - group.all_lights
+    HassToggle:
+      - command_templates:
+          - "toggle [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}}"
+          - "[the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} toggle"
+    HassShoppingListAddItem:
+      - command_templates:
+          - "add [the|a|an] ({{ clean_item_name }}){name:{{ item_name }}} to [my] shopping list"
+    HassShoppingListLastItems:
+      - command_templates:
+          - "what is on my shopping list"
+          - "[list | tell me] [my] shopping list [items]"
+    HassOpenCover:
+      - command_templates:
+          - "open [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}}"
+          - "[the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} open"
+    HassCloseCover:
+      - command_templates:
+          - "close [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}}"
+          - "[the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} close"
+    HassLightSet:
+      - command_templates:
+          - "set [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} [to] ($light_color){color}"
+          - "set [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} [brightness [to] | to brightness] ($number_0_100){brightness}"
+          - "set [the] brightness [of] [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} [to] ($number_0_100){brightness}"
+          - "set [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} [to] (maximum){brightness:100} brightness"
+    DeviceState:
+      - command_templates:
+          - "what (is | are) [the|a|an] (state | states) of [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}}"
+          - "what [is | are] [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} (state | states)"
+    IsDeviceOn:
+      - command_templates:
+          - "(is | are) [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} on"
+    IsDeviceOff:
+      - command_templates:
+          - "(is | are) [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} on"
+    IsCoverOpen:
+      - command_templates:
+          - "(is | are) [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} open"
+    IsCoverClosed:
+      - command_templates:
+          - "(is | are) [the|a|an] ({{ speech_name }}){name:{{ friendly_name }}} open"
+    IsDeviceState:
+      - commands:
+          - "is it sunset"
+          - "has the sun set [yet]"
+        data:
+          name: sun
+          state: below_horizon
+    TriggerAutomation:
+      - command_templates:
+          - "(run | execute | trigger) [program | automation] ({{ speech_name }}){name:{{ friendly_name }}}"
+    TriggerAutomationLater:
+      - command_templates:
+          - "(run | execute | trigger) [program | automation] ({{ speech_name }}){name:{{ friendly_name }}} (in | after) <SetTimer.time_expr>"
+          - "(in | after) <SetTimer.time_expr> (run | trigger) [program | automation] ({{ speech_name }}){name:{{ friendly_name }}}"
+    SetTimer:
+      commands:
+        - ...
+        - "time_expr = ((<hour_expr> [[and] <minute_expr>] [[and] <second_expr>]) | (<minute_expr> [[and] <second_expr>]) | <second_expr>)"
+        - "set [a] timer for <time_expr>"
+  intent_filters:
+    HassTurnOn:
+      include:
+        domains:
+          - light
+          - switch
+          - camera
+          - fan
+          - media_player
+        entities:
+          - group.all_lights
+    HassTurnOff:
+      include:
+        domains:
+          - light
+          - switch
+          - camera
+          - fan
+          - media_player
+        entities:
+          - group.all_lights
+    HassToggle:
+      include:
+        domains:
+          - light
+          - switch
+          - camera
+          - fan
+          - media_player
+        entities:
+          - group.all_lights
+    HassOpenCover:
+      include:
+        domains:
+          - cover
+        entities:
+          - group.all_covers
+    HassCloseCover:
+      include:
+        domains:
+          - cover
+        entities:
+          - group.all_covers
+    HassLightSet:
+      include:
+        domains:
+          - light
+        entities:
+          - group.all_lights
+    DeviceState:
+      include:
+        domains:
+          - light
+          - switch
+          - binary_sensor
+          - sensor
+          - cover
+        entities:
+          - group.all_lights
+          - group.all_covers
+    IsDeviceOn:
+      include:
+        domains:
+          - light
+          - switch
+          - camera
+          - fan
+          - media_player
+        entities:
+          - group.all_lights
+    IsDeviceOff:
+      include:
+        domains:
+          - light
+          - switch
+          - camera
+          - fan
+          - media_player
+        entities:
+          - group.all_lights
+    IsCoverOpen:
+      include:
+        domains:
+          - cover
+        entities:
+          - group.all_covers
+    IsCoverClosed:
+      include:
+        domains:
+          - cover
+        entities:
+          - group.all_covers
+    TriggerAutomation:
+      include:
+        domains:
+          - automation
+    TriggerAutomationLater:
+      include:
+        domains:
+          - automation
   intent_states:
     IsDeviceOn:
       - "on"
@@ -611,6 +776,10 @@ rhasspy:
       - yellow
       - orange
       - white
+    number_0_100:
+      - zero:0
+      - ...
+      - one hundred:100
   shopping_list_items:
   train_timeout: 1.0
 ```
